@@ -74,7 +74,7 @@ def test_employee_lifecycle(page: Page):
 
     # API validation - Verify employee details exist/updated correctly
     api = EmployeeAPI(page.context.request)
-    api.verify_employee_exists(employee_id, employee_data["first_name"], employee_data["last_name"])
+    api.verify_employee_exists(emp_number,employee_id, employee_data["first_name"], employee_data["last_name"])
     api.verify_job_details(emp_number, job_title, employment_status)
 
     #deleting the employee

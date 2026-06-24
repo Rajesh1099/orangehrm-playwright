@@ -10,20 +10,22 @@ class EmployeeAPI:
 
         return response.json()
     
-    def verify_employee_exists(self, employee_id, first_name, last_name):
-        employees = self.get_all_employees()["data"]
+    def verify_employee_exists(self, emp_number, employee_id, first_name, last_name):
+        response = self.request.get(
+        f"https://opensource-demo.orangehrmlive.com/web/index.php/api/v2/pim/employees/{emp_number}")
 
-        for employee in employees:
-            if employee["employeeId"] == employee_id:
-                assert employee["firstName"] == first_name, \
-                f"Expected First Name '{first_name}', got '{employee['firstName']}'"
+        assert response.status == 200, "Employee API request failed"
 
-                assert employee["lastName"] == last_name, \
-                f"Expected Last Name '{last_name}', got '{employee['lastName']}'"
-                
-                return
+        employee = response.json()["data"]
 
-        assert False, f"Employee ID '{employee_id}' not found in API response"
+        assert employee["employeeId"] == employee_id, \
+        f"Expected Employee ID '{employee_id}', got '{employee['employeeId']}'"
+
+        assert employee["firstName"] == first_name, \
+        f"Expected First Name '{first_name}', got '{employee['firstName']}'"
+
+        assert employee["lastName"] == last_name, \
+        f"Expected Last Name '{last_name}', got '{employee['lastName']}'"
 
     
     def verify_job_details(self, emp_number, expected_job_title, expected_status):
