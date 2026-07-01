@@ -1,5 +1,6 @@
 from playwright.sync_api import Page, expect
 
+
 class PIMPage:
 
     def __init__(self, page: Page):
@@ -8,42 +9,56 @@ class PIMPage:
         self.pim_menu = page.get_by_role("link", name="PIM")
         self.add_employee_button = page.get_by_role("button", name="Add")
         self.add_employee_heading = page.get_by_role("heading", name="Add Employee")
+
         self.first_name = page.get_by_placeholder("First Name")
         self.last_name = page.get_by_placeholder("Last Name")
         self.employee_id = page.locator("//label[text()='Employee Id']/../following-sibling::div/input")
+
         self.profile_picture = page.locator("input[type='file']")
         self.save_button = page.get_by_role("button", name="Save")
+
         self.employee_list_menu = page.get_by_role("link", name="Employee List")
         self.search_button = page.get_by_role("button", name="Search")
         self.employee_id_search = page.locator("//label[text()='Employee Id']/../following-sibling::div/input")
         self.employee_rows = page.locator(".oxd-table-body .oxd-table-row")
+
         self.job_tab = page.get_by_role("link", name="Job")
         self.job_title_dropdown = page.locator(".oxd-select-text").first
         self.employment_status_dropdown = page.locator(".oxd-select-text").last
-        self.job_title=page.get_by_text("QA Engineer")
-        self.employment_status=page.get_by_text("Full-Time Permanent")
-        self.update_employee_details=page.get_by_role("button",name="Save")
-        self.edit_button = page.locator("button:has(.bi-pencil-fill)")
-        self.delete_button = page.locator("button:has(.bi-trash)")
+
+        self.job_title = page.get_by_text("QA Engineer",exact=True)
+        self.employment_status = page.get_by_text("Full-Time Permanent")
+
+        self.update_employee_details = page.get_by_role("button", name="Save")
+
         self.confirm_delete_button = page.get_by_role("button", name="Yes, Delete")
-        self.no_records = self.page.locator("span.oxd-text--span:has-text('No Records Found')").first
-        
+
+        self.no_records = page.locator(
+            "span.oxd-text--span:has-text('No Records Found')"
+        ).first
 
     def open_add_employee_page(self):
 
         # Open PIM module
         self.pim_menu.click()
 
+        expect(self.add_employee_button).to_be_visible()
+
+        assert self.add_employee_button.is_visible(), \
+            "Add button was not visible after opening the PIM module."
+
         # Open Add Employee page
         self.add_employee_button.click()
 
     def verify_add_employee_page_loaded(self):
 
-        # Verify Add Employee page is displayed
         expect(self.add_employee_heading).to_be_visible()
 
+        assert self.add_employee_heading.is_visible(), \
+            "Add Employee page was not displayed."
 
     def add_employee(self, first_name, last_name, employee_id, profile_picture):
+
         self.first_name.fill(first_name)
         self.last_name.fill(last_name)
 
@@ -51,47 +66,99 @@ class PIMPage:
         self.employee_id.clear()
         self.employee_id.fill(employee_id)
 
+        assert self.employee_id.input_value() == employee_id, \
+            f"Employee ID '{employee_id}' was not entered correctly."
+
         self.profile_picture.set_input_files(profile_picture)
 
-        with self.page.expect_navigation():
-            self.save_button.click()
+        self.save_button.click()
+
+        self.page.wait_for_url("**/pim/viewPersonalDetails/**",timeout=10000)
+
+        assert "viewPersonalDetails" in self.page.url, \
+            f"Employee '{employee_id}' was not created successfully."
 
         return employee_id
-  
+
     def verify_employee_created(self):
+
         assert "viewPersonalDetails" in self.page.url, \
-        f"Employee profile page not opened. Current URL: {self.page.url}"
+            f"Employee profile page was not opened. Current URL: {self.page.url}"
 
     def open_employee_list(self):
-        self.employee_list_menu.click()    
+
+        self.employee_list_menu.click()
+
+        expect(self.employee_id_search).to_be_visible()
+
+        assert self.employee_id_search.is_visible(), \
+            "Employee List page was not opened."
 
     def search_employee(self, employee_id):
         self.employee_id_search.fill(employee_id)
-        self.search_button.click()    
+        
+        assert self.employee_id_search.input_value() == employee_id, \
+        f"Employee ID '{employee_id}' was not entered in the search field."
 
-    #Verify searched employee exists in results.
+        expect(self.search_button).to_be_enabled()
+
+        assert self.search_button.is_enabled(), \
+        "Search button was disabled."
+
+        self.search_button.click()
+
+    def employee_row(self, employee_id):
+
+        return self.page.locator(
+            f"div[role='row']:has-text('{employee_id}')"
+        )
+
     def verify_employee_found(self, employee_id):
-        expect(self.employee_rows.first).to_be_visible()
-        # Verify employee exists
-        employee_row = self.page.locator(f"div[role='row']:has-text('{employee_id}')")
-        #employee_cell = self.page.locator(f"div[role='cell']:has-text('{employee_id}')")
+
+        employee_row = self.employee_row(employee_id)
+
         expect(employee_row).to_be_visible()
 
+        assert employee_row.is_visible(), \
+            f"Employee '{employee_id}' was not found in the search results."
+
+    def edit_employee(self, employee_id):
+
+        employee_row = self.employee_row(employee_id)
+
+        expect(employee_row).to_be_visible()
+
+        assert employee_row.is_visible(), \
+            f"Employee '{employee_id}' was not found for editing."
+
+        employee_row.locator("button:has(.bi-pencil-fill)").click()
+
+        expect(self.job_tab).to_be_visible()
+
     def open_employee_record(self):
-        with self.page.expect_navigation():
-            self.edit_button.click() 
+
+        self.edit_employee(self.employee_id_search.input_value())
 
     def verify_employee_profile_opened(self):
+
         assert "viewPersonalDetails" in self.page.url, \
-        f"Employee profile page not opened. Current URL: {self.page.url}"
+            f"Employee profile page was not opened. Current URL: {self.page.url}"
 
     def open_job_tab(self):
-        with self.page.expect_navigation():
-            self.job_tab.click()  
+
+        expect(self.job_tab).to_be_visible()
+
+        assert self.job_tab.is_visible(), \
+            "Job tab was not visible."
+
+        self.job_tab.click()
+
+        expect(self.job_title_dropdown).to_be_visible()
 
     def verify_employee_job_tab_opened(self):
+
         assert "viewJobDetails" in self.page.url, \
-        f"Job Details page not opened. Current URL: {self.page.url}" 
+            f"Job Details page was not opened. Current URL: {self.page.url}"
 
     def update_job_details(self):
 
@@ -101,30 +168,54 @@ class PIMPage:
 
         # Employment Status
         self.employment_status_dropdown.click()
-        self.employment_status.click()    
+        self.employment_status.click()
 
-        #click save
+        expect(self.update_employee_details).to_be_visible()
+
+        assert self.update_employee_details.is_visible(), \
+            "Save button was not visible while updating employee job details."
+
+        # Click Save
         self.update_employee_details.click()
+
+        expect(self.job_title_dropdown).to_contain_text("QA Engineer")
+        expect(self.employment_status_dropdown).to_contain_text("Full-Time Permanent")
 
         return "QA Engineer", "Full-Time Permanent"
 
-    def verify_job_details_updated(self,job_title,employment_status):
+    def verify_job_details_updated(self, job_title, employment_status):
+        expect(self.job_title_dropdown).to_contain_text(job_title)
+        expect(self.employment_status_dropdown).to_contain_text(employment_status)
 
-        expect(self.page.get_by_text(job_title)).to_be_visible()
-        expect(self.page.get_by_text(employment_status)).to_be_visible()    
+        assert job_title in self.job_title_dropdown.text_content(), \
+        f"Job Title '{job_title}' was not updated."
 
+        assert employment_status in self.employment_status_dropdown.text_content(), \
+        f"Employment Status '{employment_status}' was not updated."
 
-    def delete_employee(self):
-        self.delete_button.click()
-        self.confirm_delete_button.click()
+    def click_delete_employee(self, employee_id):
+
+        employee_row = self.employee_row(employee_id)
+
+        expect(employee_row).to_be_visible()
+
+        assert employee_row.is_visible(), \
+            f"Employee '{employee_id}' was not found for deletion."
+
+        # Click Delete button
+        employee_row.locator("button:has(.bi-trash)").click()
+
+        expect(self.confirm_delete_button).to_be_visible()
+
+        assert self.confirm_delete_button.is_visible(), \
+            "Delete confirmation dialog was not displayed."
 
     def verify_employee_deleted(self, employee_id):
+
+        # Search employee again
         self.search_employee(employee_id)
-        # Look for "No Records Found"
-        expect(self.no_records).to_be_visible()    
 
+        expect(self.no_records).to_be_visible()
 
-       
-
-
-           
+        assert self.no_records.is_visible(), \
+        f"Employee '{employee_id}' was not deleted successfully."

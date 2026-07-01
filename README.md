@@ -24,20 +24,32 @@ The automated workflow includes:
 
 ---
 
+## API Testing and Enhancements
+
+This project also includes validation improvements to make the employee lifecycle flow more reliable and easier to review:
+
+* API helper methods support `GET`, `PUT`, and `DELETE` requests for employee data verification.
+* The main test cross-checks UI actions with API responses to confirm employee creation, job updates, and deletion state.
+* Assertions include clear failure messages so each step is easier to diagnose when something breaks.
+* The test flow is ordered to match the lifecycle sequence: create, validate, update, validate, delete, and verify removal.
+
+---
+
 ## Tech Stack
 
-* Python
-* Playwright
-* Pytest
-* Requests
-* Pytest HTML Report
+- Python
+- Playwright
+- Pytest
+- pytest-playwright
+- Requests (Playwright APIRequestContext)
+- pytest-html
 
 ---
 
 ## Framework Structure
 
 ```text
-OrangeHRM_Project/
+orangehrm-playwright/
 
 ├── pages/
 │   ├── login_page.py
@@ -72,8 +84,8 @@ OrangeHRM_Project/
 ### Clone Repository
 
 ```bash
-git clone <repository-url>
-cd OrangeHRM_Project
+git clone https://github.com/Rajesh1099/orangehrm-playwright.git
+cd orangehrm-playwright
 ```
 
 ### Create Virtual Environment
@@ -179,6 +191,8 @@ screenshots/
 
 Screenshots are automatically captured when a test fails.
 
+The test configuration is set up to record videos during execution and generate an HTML report at the end of the run.
+
 ---
 
 ## Features Implemented
@@ -186,6 +200,8 @@ Screenshots are automatically captured when a test fails.
 * Page Object Model (POM)
 * Data-Driven Testing using JSON
 * API Validation
+* API-assisted cross-checking of UI data
+* Descriptive assertions with clear failure messages
 * HTML Reporting
 * Video Recording
 * Screenshot Capture on Failure

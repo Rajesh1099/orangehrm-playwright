@@ -41,3 +41,4 @@ def pytest_runtest_makereport(item, call):
 
         if page:
             page.screenshot(path=f"screenshots/{item.name}.png",full_page=True)
+
